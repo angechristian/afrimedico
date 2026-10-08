@@ -7,13 +7,14 @@ documents; it must not be deployed as a stateless Vercel function.
 ## 1. Protect local data before publishing
 
 The repository ignore rules exclude the local SQLite database, uploaded
-documents, build output, dependencies and environment files. Create a private
-GitHub repository and push the source code without adding those ignored files.
-Do not publish real pharmacy documents or production credentials.
+documents, build output, dependencies and environment files. The source is
+published at https://github.com/angechristian/afrimedico. Do not commit real
+pharmacy documents, API keys, or production credentials to this public
+repository.
 
 ## 2. Deploy the API on Render
 
-Create a Render Blueprint from the private repository and use `render.yaml`.
+Create a Render Blueprint from the public repository and use `render.yaml`.
 The blueprint provisions a paid persistent disk at `/var/data`. Set
 `ADMIN_INITIAL_PASSWORD` when prompted to a unique password of at least 12
 characters and keep it private. The initial admin email is
