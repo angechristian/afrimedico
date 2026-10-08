@@ -64,6 +64,9 @@
 .cp-manager-mini, .cp-user-avatar { display: grid; width: 31px; height: 31px; flex: 0 0 31px; place-items: center; border: 1px solid #e1ebe3; border-radius: 50%; background: #edf5ef; color: #376846; font-size: 9px; font-weight: 700; }
 .cp-sidebar-bottom > button { border: 0; margin-left: auto; background: none; color: #829087; cursor: pointer; font-size: 15px; }
 .cp-main { min-height: 100vh; margin-left: 248px; }
+.cp-demo-banner { display: flex; min-height: 34px; align-items: center; gap: 10px; border-bottom: 1px solid #dcebe0; padding: 6px 25px; background: #eaf4ed; color: #637969; font-size: 10px; }
+.cp-demo-banner strong { color: #28663e; font-size: 9px; letter-spacing: .7px; }
+.cp-demo-banner span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cp-topbar { position: sticky; z-index: 10; top: 0; display: flex; height: 70px; align-items: center; justify-content: space-between; gap: 18px; border-bottom: 1px solid var(--cp-line); padding: 0 30px; background: rgb(255 255 255 / 96%); backdrop-filter: blur(8px); }
 .cp-global-search { display: flex; width: min(405px, 44%); height: 37px; align-items: center; gap: 8px; border: 1px solid var(--cp-line); border-radius: 8px; padding: 0 10px; color: #87948b; }
 .cp-global-search > span { font-size: 18px; }
@@ -428,6 +431,8 @@
 .cp-auth-screen { display: grid; min-height: 100vh; align-content: center; justify-items: center; padding: 24px; }
 .cp-auth-brand { display: flex; align-items: center; gap: 9px; margin: 0 0 20px; text-decoration: none; }
 .cp-auth-card { display: grid; width: min(430px, 100%); gap: 12px; border: 1px solid var(--cp-line); border-radius: 13px; padding: 25px; background: #fff; box-shadow: 0 12px 40px rgb(18 54 31 / 7%); }
+.cp-demo-entry { gap: 15px; }
+.cp-demo-entry .cp-button { width: 100%; }
 .cp-auth-mark { display: grid; width: 40px; height: 40px; place-items: center; border: 1px solid #deebe1; border-radius: 11px; background: #edf5ef; color: var(--cp-green); }
 .cp-auth-card .cp-kicker { margin: 1px 0 0; color: var(--cp-green); font-size: 8px; font-weight: 700; letter-spacing: 1.2px; }
 .cp-auth-card h1 { margin: -7px 0 -7px; color: #1b3523; font: 600 23px/1.2 var(--cp-head); }
@@ -492,6 +497,8 @@
 .theme-dark .cp-workspace-strip, .theme-dark .cp-footer { color: #a0b0a5; }
 .theme-dark .cp-auth-screen { background: var(--cp-bg); }
 .theme-dark .cp-auth-card { border-color: var(--cp-line); background: var(--cp-card); }
+.theme-dark .cp-demo-banner { border-color: #31483a; background: #23392b; color: #bdcfbf; }
+.theme-dark .cp-demo-banner strong { color: #b4d6bf; }
 .theme-dark .cp-auth-card h1 { color: #e2eee5; }
 .theme-dark .cp-auth-card label { color: #c1d0c5; }
 .theme-dark .cp-auth-card input { border-color: var(--cp-line); background: #17221b; color: var(--cp-text); }
@@ -499,6 +506,7 @@
 @media (max-width: 1120px) {
   .cp-sidebar { width: 210px; }
   .cp-main { margin-left: 210px; }
+  .cp-demo-banner { padding-right: 15px; padding-left: 15px; }
   .cp-content { padding: 15px 20px; }
   .cp-topbar { padding: 0 20px; }
   .cp-product-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -509,6 +517,8 @@
 @media (max-width: 760px) {
   .cp-sidebar { display: none; }
   .cp-main { margin-left: 0; padding-bottom: 72px; }
+  .cp-demo-banner { justify-content: center; flex-wrap: wrap; gap: 3px 8px; padding: 6px 12px; text-align: center; }
+  .cp-demo-banner span { white-space: normal; }
   .cp-topbar { height: 60px; padding: 0 13px; }
   .cp-global-search { width: auto; flex: 1; height: 35px; }
   .cp-global-search kbd { display: none; }

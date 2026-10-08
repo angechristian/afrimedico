@@ -35,3 +35,12 @@ The client portal is served at `/`; the staff portal is served at `/admin`.
 Use a pharmacy test account and the initial administrator account to verify
 both portals. Payment collection and live proforma submission are not
 implemented yet.
+
+## Presentation-only Vercel preview
+
+To show the interface before deploying the backend, import the GitHub
+repository into Vercel and leave `VITE_API_BASE_URL` unset. Production builds
+without an API URL automatically show the client and admin sample-data previews
+instead of account sign-in. Preview edits stay in the viewer's browser and do
+not change the company system. Add `VITE_API_BASE_URL` after deploying the API
+to enable the connected sign-in and account flows.

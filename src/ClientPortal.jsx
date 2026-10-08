@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import './client.css';
-import { apiUrl } from './api';
+import { apiUrl, DEMO_MODE } from './api';
 
 const USER_KEY = 'afrimedico-client-user';
 const TOKEN_KEY = 'afrimedico-client-token';
@@ -168,7 +168,7 @@ function ClientPortal() {
         const response = await fetch(apiUrl('/api/products'));
         if (!response.ok) throw new Error('Unable to load the current product catalogue.');
         const liveProducts = await response.json();
-        if (!active || !Array.isArray(liveProducts)) return;
+            if (!active || !Array.isArray(liveProducts)) return;
         const merged = liveProducts.map((product) => {
           const sample = sampleProducts.find((item) => item.id === product.id);
           return sample ? { ...sample, ...product, brand: sample.brand, batch: sample.batch, expiry: sample.expiry, premiumOnly: sample.premiumOnly, description: sample.description } : { ...product, brand: 'Afrimedico verified', batch: 'Available on confirmation', expiry: 'See certificate', premiumOnly: false, description: 'Quality-assured medical supply available to verified facilities.' };
@@ -179,13 +179,13 @@ function ClientPortal() {
         if (active) setError(requestError.message);
       }
     }
-    loadClientData();
+    if (!DEMO_MODE) loadClientData();
     return () => { active = false; };
   }, []);
 
   useEffect(() => {
     let active = true;
-    if (!token || user?.role !== 'pharmacy') return undefined;
+    if (DEMO_MODE || !token || user?.role !== 'pharmacy') return undefined;
     setLoading(true);
     fetch(apiUrl('/api/orders'), { headers: { Authorization: `Bearer ${token}` } })
       .then(async (response) => {
@@ -253,6 +253,14 @@ function ClientPortal() {
       localStorage.removeItem(USER_KEY); localStorage.removeItem(TOKEN_KEY);
       setUser(null); setToken(''); setServerOrders([]); setProfileMenu(false);
     }
+  };
+
+  const enterDemo = () => {
+    localStorage.removeItem(USER_KEY);
+    localStorage.removeItem(TOKEN_KEY);
+    setToken('');
+    setUser({ role: 'pharmacy', facilityName: 'Kigali Community Clinic', email: 'procurement@kigaliclinic.rw', verificationStatus: 'approved' });
+    setPage('Home');
   };
 
   const changeQuantity = (id, delta) => setCart((current) => {
@@ -329,6 +337,8 @@ function ClientPortal() {
     notify('Message saved to your support thread.');
   };
 
+  const renderDemoEntry = () => <div className="cp-auth-screen"><a className="cp-auth-brand" href="#home"><span className="cp-logo-mark">a<span>+</span></span><strong>afri<span>medico</span></strong></a><div className="cp-auth-card cp-demo-entry"><div className="cp-auth-mark">✚</div><p className="cp-kicker">PRESENTATION PREVIEW</p><h1>Explore the partner portal.</h1><p className="cp-auth-intro">Browse the sample catalogue, proformas, order tracking and facility account. This preview does not connect to live accounts or submit real orders.</p><button className="cp-button primary cp-auth-submit" onClick={enterDemo}>Explore client preview →</button></div><small className="cp-auth-foot">Sample data only · No live transactions</small></div>;
+
   const renderAuth = () => <div className="cp-auth-screen"><a className="cp-auth-brand" href="#home"><span className="cp-logo-mark">a<span>+</span></span><strong>afri<span>medico</span></strong></a><div className="cp-auth-card"><div className="cp-auth-mark">✚</div><p className="cp-kicker">PREMIUM PARTNER PORTAL</p><h1>{authMode === 'login' ? 'Your supply network, simplified.' : 'Join the Afrimedico network.'}</h1><p className="cp-auth-intro">{authMode === 'login' ? 'Sign in to reorder essential healthcare supplies and manage your facility.' : 'Register your pharmacy or facility for verified wholesale access.'}</p>{error && <div className="cp-error">{error}</div>}<form onSubmit={signIn}>
     {authMode === 'register' && <label>Facility name<input required value={authForm.facilityName} onChange={(event) => setAuthForm({ ...authForm, facilityName: event.target.value })} placeholder="e.g. Musanze District Hospital" /></label>}
     <label>Facility email<input type="email" required autoComplete="username" value={authForm.email} onChange={(event) => setAuthForm({ ...authForm, email: event.target.value })} placeholder="procurement@facility.rw" /></label>
@@ -374,11 +384,12 @@ function ClientPortal() {
   const pageRender = { Home: home, Shop: shop, Proformas: proformas, Orders: orderPage, Invoices: invoicePage, Account: accountPage, Support: supportPage };
   const current = pageRender[page] ? page : 'Home';
 
-  if (!user || user.role !== 'pharmacy' || !token) return renderAuth();
+  if (DEMO_MODE && (!user || user.role !== 'pharmacy')) return renderDemoEntry();
+  if (!DEMO_MODE && (!user || user.role !== 'pharmacy' || !token)) return renderAuth();
 
   return <div className={`cp-app ${dark ? 'theme-dark' : ''}`}>
     <aside className="cp-sidebar"><a className="cp-brand" href="#home"><span className="cp-logo-mark">a<span>+</span></span><span><strong>afri<span>medico</span></strong><small>PREMIUM PARTNER</small></span></a><div className="cp-facility-switch"><span>{pharmacyName.slice(0, 2).toUpperCase()}</span><div><strong>{pharmacyName}</strong><small>Verified facility</small></div><button aria-label="Facility options">⌄</button></div><nav aria-label="Partner portal navigation">{tabs.map(([name, icon]) => <button key={name} className={current === name ? 'active' : ''} onClick={() => { setPage(name); setNotice(''); }}><span>{icon}</span>{name}{name === 'Proformas' && cartCount > 0 && <i>{cartCount}</i>}</button>)}<button className={current === 'Support' ? 'active' : ''} onClick={() => setPage('Support')}><span>?</span>Support</button></nav><div className="cp-sidebar-premium"><span>✦</span><div><strong>Premium member</strong><small>6% off every order</small></div><b>✓</b></div><div className="cp-sidebar-bottom"><span className="cp-manager-mini">AU</span><div><strong>{user.facilityName || 'Pharmacy partner'}</strong><small>Procurement account</small></div><button onClick={signOut} aria-label="Sign out">↗</button></div></aside>
-    <div className="cp-main"><header className="cp-topbar"><label className="cp-global-search"><span>⌕</span><input value={search} onChange={(event) => { setSearch(event.target.value); if (event.target.value) setPage('Shop'); }} placeholder="Search medicines, equipment and supplies" /><kbd>⌘ K</kbd></label><div className="cp-top-actions"><button className="cp-icon-button" onClick={() => setNotificationsOpen((open) => !open)} aria-label="Notifications">♧<i>2</i></button><button className="cp-cart-button" onClick={() => setPage('Proformas')}>▤ <span>Proforma</span><b>{cartCount}</b></button><div className="cp-profile-wrap"><button className="cp-profile-button" onClick={() => setProfileMenu((open) => !open)}><span className="cp-user-avatar">{pharmacyName.slice(0, 2).toUpperCase()}</span><span><strong>{pharmacyName}</strong><small><i /> Premium member</small></span><b>⌄</b></button>{profileMenu && <div className="cp-profile-menu"><button onClick={() => { setProfileMenu(false); setPage('Account'); }}>Account settings</button><button onClick={signOut}>Sign out</button></div>}</div></div></header>
+    <div className="cp-main">{DEMO_MODE && <div className="cp-demo-banner"><strong>DEMO PREVIEW</strong><span>Sample data only · Changes stay in this browser · No live accounts or orders</span></div>}<header className="cp-topbar"><label className="cp-global-search"><span>⌕</span><input value={search} onChange={(event) => { setSearch(event.target.value); if (event.target.value) setPage('Shop'); }} placeholder="Search medicines, equipment and supplies" /><kbd>⌘ K</kbd></label><div className="cp-top-actions"><button className="cp-icon-button" onClick={() => setNotificationsOpen((open) => !open)} aria-label="Notifications">♧<i>2</i></button><button className="cp-cart-button" onClick={() => setPage('Proformas')}>▤ <span>Proforma</span><b>{cartCount}</b></button><div className="cp-profile-wrap"><button className="cp-profile-button" onClick={() => setProfileMenu((open) => !open)}><span className="cp-user-avatar">{pharmacyName.slice(0, 2).toUpperCase()}</span><span><strong>{pharmacyName}</strong><small><i /> Premium member</small></span><b>⌄</b></button>{profileMenu && <div className="cp-profile-menu"><button onClick={() => { setProfileMenu(false); setPage('Account'); }}>Account settings</button><button onClick={signOut}>Sign out</button></div>}</div></div></header>
       {notificationsOpen && <div className="cp-notification-popover"><strong>Notifications</strong><button onClick={() => { setNotificationsOpen(false); setPage('Orders'); }}>Order ORD-2026-0918 is out for delivery today.</button><button onClick={() => { setNotificationsOpen(false); setPage('Invoices'); }}>INV-2026-0730 payment is due 15 Oct.</button></div>}
       <main className="cp-content"><div className="cp-workspace-strip"><span>{online ? '● Connected' : '● Offline · Drafts saved locally'}</span><i />Premium partner workspace <span className="cp-preview-note">Sample account data</span></div>{error && <div className="cp-error">{error}<button onClick={() => setError('')}>×</button></div>}{notice && <div className="cp-notice"><span>✓</span>{notice}<button onClick={() => setNotice('')}>×</button></div>}{pageRender[current]() }<footer className="cp-footer"><span>© 2026 Afrimedico Rwanda</span><span>Supporting trusted healthcare supply · Kigali, Rwanda</span><button onClick={() => setPage('Support')}>Partner support</button></footer></main>
     </div>

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import './admin.css';
-import { apiUrl } from './api';
+import { apiUrl, DEMO_MODE } from './api';
 
 const ADMIN_TOKEN_KEY = 'afrimedico-admin-token';
 const ADMIN_USER_KEY = 'afrimedico-admin-user';
@@ -147,6 +147,7 @@ function AdminPortal() {
   const [passwordDialog, setPasswordDialog] = useState(false);
   const [passwordFields, setPasswordFields] = useState({ currentPassword: '', newPassword: '' });
   const [loginBusy, setLoginBusy] = useState(false);
+  const [demoPreview, setDemoPreview] = useState(false);
   const [apiOrders, setApiOrders] = useState([]);
   const [apiProducts, setApiProducts] = useState([]);
   const [apiPharmacies, setApiPharmacies] = useState([]);
@@ -195,7 +196,7 @@ function AdminPortal() {
   }
 
   useEffect(() => {
-    if (!token || user?.role !== 'admin') return;
+    if (DEMO_MODE || !token || user?.role !== 'admin') return;
     loadAdminRecords().catch(() => {
       localStorage.removeItem(ADMIN_TOKEN_KEY);
       localStorage.removeItem(ADMIN_USER_KEY);
@@ -226,7 +227,7 @@ function AdminPortal() {
 
   const signOut = async () => {
     try { if (token) await fetch(apiUrl('/api/admin/logout'), { method: 'POST', headers: { Authorization: `Bearer ${token}` } }); }
-    finally { localStorage.removeItem(ADMIN_TOKEN_KEY); localStorage.removeItem(ADMIN_USER_KEY); setToken(''); setUser(null); }
+    finally { localStorage.removeItem(ADMIN_TOKEN_KEY); localStorage.removeItem(ADMIN_USER_KEY); setToken(''); setUser(null); setDemoPreview(false); }
   };
 
   const changePassword = async (event) => {
@@ -338,6 +339,8 @@ function AdminPortal() {
   const tableQuery = (rows, keys) => rows.filter((row) => keys.some((key) => String(row[key] || '').toLowerCase().includes(query.toLowerCase())));
   const filteredOrders = tableQuery(orders.filter((row) => filter === 'All statuses' || row.status === filter), ['ref', 'facility', 'status']);
 
+  if (DEMO_MODE && !demoPreview) return <div className="af-login-screen"><div className="af-login-brand"><div className="af-brand-mark">a<span>+</span></div><strong>afri<span>medico</span></strong></div><div className="af-login-card af-demo-entry"><div className="af-login-icon">⌑</div><div className="af-login-eyebrow">PRESENTATION PREVIEW</div><h1>Explore the operations panel.</h1><p>Review sample dashboard metrics, proformas, inventory and operations. This preview does not connect to live accounts or save changes to the company system.</p><button className="af-button primary af-login-submit" onClick={() => setDemoPreview(true)}>Explore admin preview →</button><small>Sample data only · No live transactions</small></div><footer>AFRIMEDICO RWANDA · KIGALI</footer></div>;
+
   const dashboard = () => {
     const pending = proformas.filter((item) => item.status === 'Submitted').length;
     const lowStock = products.filter((item) => item.stock < item.min).length;
@@ -419,7 +422,7 @@ function AdminPortal() {
     Settings: settingsPage
   };
 
-  if (!token || user?.role !== 'admin') return <div className="af-login-screen"><div className="af-login-brand"><div className="af-brand-mark">a<span>+</span></div><strong>afri<span>medico</span></strong></div><form className="af-login-card" onSubmit={signIn}><div className="af-login-icon">⌑</div><div className="af-login-eyebrow">SECURE OPERATIONS PORTAL</div><h1>Welcome back</h1><p>Sign in to manage the Afrimedico supply network.</p>{error && <div className="af-login-error">{error}</div>}<label>Email address<input type="email" autoComplete="username" required value={login.email} onChange={(event) => setLogin({ ...login, email: event.target.value })} /></label><label>Password<input type="password" autoComplete="current-password" required value={login.password} onChange={(event) => setLogin({ ...login, password: event.target.value })} /></label><button className="af-button primary af-login-submit" disabled={loginBusy}>{loginBusy ? 'Signing in…' : 'Sign in to operations'}</button><small>Access is restricted to authorised Afrimedico staff.</small></form><footer>AFRIMEDICO RWANDA · KIGALI</footer></div>;
+  if (!DEMO_MODE && (!token || user?.role !== 'admin')) return <div className="af-login-screen"><div className="af-login-brand"><div className="af-brand-mark">a<span>+</span></div><strong>afri<span>medico</span></strong></div><form className="af-login-card" onSubmit={signIn}><div className="af-login-icon">⌑</div><div className="af-login-eyebrow">SECURE OPERATIONS PORTAL</div><h1>Welcome back</h1><p>Sign in to manage the Afrimedico supply network.</p>{error && <div className="af-login-error">{error}</div>}<label>Email address<input type="email" autoComplete="username" required value={login.email} onChange={(event) => setLogin({ ...login, email: event.target.value })} /></label><label>Password<input type="password" autoComplete="current-password" required value={login.password} onChange={(event) => setLogin({ ...login, password: event.target.value })} /></label><button className="af-button primary af-login-submit" disabled={loginBusy}>{loginBusy ? 'Signing in…' : 'Sign in to operations'}</button><small>Access is restricted to authorised Afrimedico staff.</small></form><footer>AFRIMEDICO RWANDA · KIGALI</footer></div>;
 
   return <div className={`af-admin ${collapsed ? 'is-collapsed' : ''} ${dark ? 'theme-dark' : ''}`}>
     <aside className="af-sidebar">
@@ -430,7 +433,7 @@ function AdminPortal() {
     </aside>
     <div className="af-main">
       <header className="af-topbar"><label className="af-global-search"><span>⌕</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search anything..." /><kbd>⌘ K</kbd></label><div className="af-top-actions"><button className="af-notifications" aria-label="Notifications" onClick={() => navSelection('Proforma Invoices')}>♧<i>4</i></button><Button primary onClick={() => { setPage('Proforma Invoices'); setDrawer({ type: 'new-proforma' }); }}>＋ New proforma</Button><span className="af-top-divider" /><button className="af-profile" onClick={() => setPasswordDialog(true)}><span className="af-avatar">AU</span><span><strong>{user?.facilityName || 'Afrimedico Admin'}</strong><small>Administrator</small></span><b>⌄</b></button></div></header>
-      <main className="af-content">      <div className="af-demo-banner"><span>PREVIEW WORKSPACE</span><i /> Sample operational records <b>·</b> {apiOrders.length} live orders <b>·</b> {apiProducts.length} catalogue products <b>·</b> {apiPharmacies.length} pharmacy accounts</div>
+      <main className="af-content">      <div className="af-demo-banner"><span>{DEMO_MODE ? 'DEMO PREVIEW' : 'PREVIEW WORKSPACE'}</span><i />{DEMO_MODE ? 'Sample data only · Changes stay in this browser · No live accounts or orders' : <>Sample operational records <b>·</b> {apiOrders.length} live orders <b>·</b> {apiProducts.length} catalogue products <b>·</b> {apiPharmacies.length} pharmacy accounts</>}</div>
         {error && <div className="af-error">{error}<button onClick={() => setError('')}>×</button></div>}
         {pageContent[currentNav]()}
         {currentNav === 'Dashboard' && apiLoading && <section className="af-card af-live-review"><div className="af-card-head"><div><h2>Loading live operations</h2><p>Fetching pharmacy, order and stock records</p></div></div><div className="af-skeleton-list">{[1, 2, 3].map((item) => <div className="af-skeleton-row" key={item}><i /><span /><span /><b /></div>)}</div></section>}
