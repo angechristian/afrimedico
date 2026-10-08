@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: afrimedico-api
+    runtime: node
+    plan: starter
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    disk:
+      name: afrimedico-data
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: AFRIMEDICO_DB_PATH
+        value: /var/data/data.sqlite
+      - key: AFRIMEDICO_UPLOADS_DIR
+        value: /var/data/uploads
+      - key: ADMIN_INITIAL_PASSWORD
+        sync: false
